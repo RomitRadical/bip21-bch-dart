@@ -1,11 +1,11 @@
 import 'dart:convert';
 import 'package:meta/meta.dart';
 
-class BitcoinRequest {
+class BitcoinCashRequest {
   String address;
   Map<String, dynamic> options;
 
-  BitcoinRequest({@required this.address, this.options}) {
+  BitcoinCashRequest({@required this.address, this.options}) {
     if (this.options == null) this.options = Map();
   }
 
@@ -21,7 +21,7 @@ class BitcoinRequest {
   set message(String newMessage) => options["message"] = newMessage;
   set amount(dynamic newAmount) => options["amount"] = newAmount;
 
-  BitcoinRequest.fromJson(Map<String, dynamic> json)
+  BitcoinCashRequest.fromJson(Map<String, dynamic> json)
       : address = json["address"],
         options = json["options"];
 
@@ -39,8 +39,8 @@ class BitcoinRequest {
 }
 
 class Bip21 {
-  static BitcoinRequest decode(String uri, [String urnScheme]) {
-    urnScheme = urnScheme ?? "bitcoin";
+  static BitcoinCashRequest decode(String uri, [String urnScheme]) {
+    urnScheme = urnScheme ?? "bitcoincash";
     if (uri.indexOf(urnScheme) != 0 || uri[urnScheme.length] != ":")
       throw ("Invalid BIP21 URI");
 
@@ -66,14 +66,14 @@ class Bip21 {
       options["amount"] = amount;
     }
 
-    return BitcoinRequest(
+    return BitcoinCashRequest(
       address: address,
       options: options,
     );
   }
 
-  static String encode(BitcoinRequest req, [String urnScheme]) {
-    urnScheme = urnScheme ?? "bitcoin";
+  static String encode(BitcoinCashRequest req, [String urnScheme]) {
+    urnScheme = urnScheme ?? "bitcoincash";
     String query = "";
     if (req.options != null && req.options.isNotEmpty) {
       if (req.amount != null) {
