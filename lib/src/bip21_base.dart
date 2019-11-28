@@ -31,15 +31,20 @@ class Bip21 {
     };
   }
 
-  static String encode(Map<String, dynamic> req) {
+  static String encode(String address, Map<String, dynamic> options) {
+    var isCashAddress = address.startsWith('bitcoincash:');
+    if (!isCashAddress) {
+      address = 'bitcoincash:$address';
+    }
+
     String query = "";
-    if (req['options'] != null && req['options'].isNotEmpty) {
-      if (req['amount'] != null) {
-        if (!req['amount'].isFinite) throw ("Invalid amount: not finite");
-        if (req['amount'] < 0) throw ("Invalid amount: not positive");
+    if (options != null && options.isNotEmpty) {
+      if (options['amount'] != null) {
+        if (!options['amount'].isFinite) throw ("Invalid amount: not finite");
+        if (options['amount'] < 0) throw ("Invalid amount: not positive");
       }
 
-      Map<String, dynamic> uriOptions = req['options'];
+      Map<String, dynamic> uriOptions = options;
       uriOptions.removeWhere((key, value) => value == null);
       uriOptions.forEach((key, value) {
         uriOptions[key] = value.toString();
@@ -51,6 +56,6 @@ class Bip21 {
       query = query.replaceAll(RegExp(r"\+"), "%20");
     }
 
-    return "${req['address']}$query";
+    return "$address$query";
   }
 }
