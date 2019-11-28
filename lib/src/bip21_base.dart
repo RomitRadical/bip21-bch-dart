@@ -1,47 +1,6 @@
-import 'dart:convert';
-import 'package:meta/meta.dart';
-
-class BitcoinCashRequest {
-  String address;
-  Map<String, dynamic> options;
-
-  BitcoinCashRequest({@required this.address, this.options}) {
-    if (this.options == null) this.options = Map();
-  }
-
-  String get label => options["label"];
-  String get message => options["message"];
-  double get amount => options["amount"] is int
-      ? options["amount"].toDouble()
-      : options["amount"] is String
-          ? double.parse(options["amount"])
-          : options["amount"];
-
-  set label(String newLabel) => options["label"] = newLabel;
-  set message(String newMessage) => options["message"] = newMessage;
-  set amount(dynamic newAmount) => options["amount"] = newAmount;
-
-  BitcoinCashRequest.fromJson(Map<String, dynamic> json)
-      : address = json["address"],
-        options = json["options"];
-
-  String toJson() {
-    Map<String, dynamic> decodeOptions = options;
-    decodeOptions.removeWhere((key, value) => value == null);
-    return json.encode({
-      "address": address,
-      "options": decodeOptions,
-    }).toString();
-  }
-
-  @override
-  String toString() => Bip21.encode(this);
-}
-
 class Bip21 {
-  static BitcoinCashRequest decode(String uri, [String urnScheme]) {
-    urnScheme = urnScheme ?? "bitcoincash";
-    if (uri.indexOf(urnScheme) != 0 || uri[urnScheme.length] != ":")
+  static Map<String, dynamic> decode(String uri) {
+    if (uri.indexOf('bitcoincash') != 0 || uri['bitcoincash'.length] != ":")
       throw ("Invalid BIP21 URI");
 
     int split = uri.indexOf("?");
@@ -52,12 +11,12 @@ class Bip21 {
       "label": uriOptions["label"],
     });
 
-    String address =
-        uri.substring(urnScheme.length + 1, split == -1 ? null : split);
+    String address = uri.substring(0, split == -1 ? null : split);
 
     if (uriOptions["amount"] != null) {
       if (uriOptions["amount"].indexOf(",") != -1)
         throw ("Invalid amount: commas are invalid");
+
       double amount = double.tryParse(uriOptions["amount"]);
       if (amount == null || amount.isNaN)
         throw ("Invalid amount: not a number");
@@ -66,22 +25,21 @@ class Bip21 {
       options["amount"] = amount;
     }
 
-    return BitcoinCashRequest(
-      address: address,
-      options: options,
-    );
+    return {
+      'address': address,
+      'options': options,
+    };
   }
 
-  static String encode(BitcoinCashRequest req, [String urnScheme]) {
-    urnScheme = urnScheme ?? "bitcoincash";
+  static String encode(Map<String, dynamic> req) {
     String query = "";
-    if (req.options != null && req.options.isNotEmpty) {
-      if (req.amount != null) {
-        if (!req.amount.isFinite) throw ("Invalid amount: not finite");
-        if (req.amount < 0) throw ("Invalid amount: not positive");
+    if (req['options'] != null && req['options'].isNotEmpty) {
+      if (req['amount'] != null) {
+        if (!req['amount'].isFinite) throw ("Invalid amount: not finite");
+        if (req['amount'] < 0) throw ("Invalid amount: not positive");
       }
 
-      Map<String, dynamic> uriOptions = req.options;
+      Map<String, dynamic> uriOptions = req['options'];
       uriOptions.removeWhere((key, value) => value == null);
       uriOptions.forEach((key, value) {
         uriOptions[key] = value.toString();
@@ -93,6 +51,6 @@ class Bip21 {
       query = query.replaceAll(RegExp(r"\+"), "%20");
     }
 
-    return "$urnScheme:${req.address}$query";
+    return "${req['address']}$query";
   }
 }
